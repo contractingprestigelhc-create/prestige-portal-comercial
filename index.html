@@ -198,10 +198,151 @@ button, a { -webkit-tap-highlight-color:transparent; }
   padding:9px 12px; border-radius:10px; font-weight:800;
 }
 .viewer-switch button.active { background:var(--prestige-red); color:#fff; border-color:var(--prestige-red); }
+/* Visor nativo por páginas: salto exacto desde el mapa */
 .viewer-frame {
-  position:relative; width:100%; height:min(76vh,790px); min-height:520px; background:#292929;
+  position:relative;
+  width:100%;
+  height:min(76vh,790px);
+  min-height:520px;
+  background:#202020;
+  overflow:hidden;
 }
-.viewer-frame iframe { width:100%; height:100%; border:0; background:#fff; }
+.viewer-page-stage {
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:22px 72px 72px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.viewer-page-stage img {
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:4px;
+  box-shadow:0 18px 46px rgba(0,0,0,.38);
+  background:#fff;
+}
+.viewer-page-stage.loading img { opacity:.28; }
+.viewer-page-stage::before {
+  content:"Cargando página…";
+  position:absolute;
+  z-index:2;
+  color:#fff;
+  font-weight:800;
+  opacity:0;
+  pointer-events:none;
+}
+.viewer-page-stage.loading::before { opacity:1; }
+
+.viewer-page-nav {
+  position:absolute;
+  top:50%;
+  z-index:4;
+  width:46px;
+  height:58px;
+  margin-top:-29px;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:14px;
+  background:rgba(15,15,15,.82);
+  color:#fff;
+  cursor:pointer;
+  font-size:2rem;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(9px);
+}
+.viewer-page-nav:hover { background:var(--prestige-red); }
+.viewer-page-nav:disabled {
+  opacity:.3;
+  cursor:not-allowed;
+  background:rgba(15,15,15,.72);
+}
+.viewer-page-prev { left:14px; }
+.viewer-page-next { right:14px; }
+
+.viewer-page-controls {
+  position:absolute;
+  left:50%;
+  bottom:14px;
+  z-index:5;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 12px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;
+  background:rgba(15,15,15,.88);
+  color:#fff;
+  box-shadow:0 12px 30px rgba(0,0,0,.24);
+  backdrop-filter:blur(10px);
+}
+.viewer-page-controls button {
+  width:34px;
+  height:34px;
+  border:0;
+  border-radius:50%;
+  background:#2c2c2c;
+  color:#fff;
+  cursor:pointer;
+  font-weight:900;
+}
+.viewer-page-controls button:hover { background:var(--prestige-red); }
+.viewer-page-controls button:disabled { opacity:.34; cursor:not-allowed; }
+.viewer-page-indicator {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  font-size:.86rem;
+  font-weight:800;
+}
+.viewer-page-input {
+  width:48px;
+  min-height:34px;
+  border:1px solid #474747;
+  border-radius:9px;
+  background:#242424;
+  color:#fff;
+  text-align:center;
+  font:800 .88rem/1 "Segoe UI",Arial,sans-serif;
+}
+.viewer-page-input:focus {
+  outline:3px solid rgba(59,197,91,.2);
+  border-color:#3bc55b;
+}
+
+@media (max-width:680px) {
+  .viewer-frame {
+    min-height:500px;
+    height:72vh;
+  }
+  .viewer-page-stage {
+    padding:18px 16px 78px;
+  }
+  .viewer-page-nav {
+    top:auto;
+    bottom:15px;
+    width:42px;
+    height:42px;
+    margin:0;
+    border-radius:50%;
+  }
+  .viewer-page-prev { left:12px; }
+  .viewer-page-next { right:12px; }
+  .viewer-page-controls {
+    bottom:14px;
+    max-width:calc(100% - 126px);
+  }
+}
 .viewer-footer {
   display:flex; justify-content:space-between; gap:14px; align-items:center; flex-wrap:wrap;
   padding:14px 18px; border-top:1px solid #343434; color:#b9b9b9; font-size:.84rem;
@@ -713,7 +854,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
         <h2>Visor de documentos</h2>
       </div>
       <p class="section-intro">
-        Consulta Life, Health y Suplementarios sin salir del portal. El contenido se carga directamente desde Google Drive.
+        Consulta Life, Health y Suplementarios por página. Los títulos del mapa abren exactamente la página indicada.
       </p>
     </div>
 
@@ -729,15 +870,34 @@ button, a { -webkit-tap-highlight-color:transparent; }
           <button data-doc="supp">Suplementarios</button>
         </div>
       </div>
-      <div class="viewer-frame">
-        <iframe id="document-frame"
-          src="https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/preview"
-          title="Visor Prestige Life"
-          allow="autoplay">
-        </iframe>
+      <div class="viewer-frame" id="viewer-page-shell" tabindex="0"
+        aria-label="Visor de páginas del documento">
+        <button class="viewer-page-nav viewer-page-prev" id="viewer-prev"
+          type="button" aria-label="Página anterior">‹</button>
+
+        <div class="viewer-page-stage" id="viewer-page-stage">
+          <img id="document-page"
+            src="assets/pages/life/page-001.webp"
+            alt="Prestige Life, página 1">
+        </div>
+
+        <button class="viewer-page-nav viewer-page-next" id="viewer-next"
+          type="button" aria-label="Página siguiente">›</button>
+
+        <div class="viewer-page-controls" aria-label="Controles de página">
+          <button id="viewer-first" type="button" aria-label="Primera página">«</button>
+          <div class="viewer-page-indicator">
+            <span>Página</span>
+            <input class="viewer-page-input" id="viewer-page-input"
+              type="number" min="1" value="1" inputmode="numeric"
+              aria-label="Número de página">
+            <span>de <strong id="viewer-page-total">12</strong></span>
+          </div>
+          <button id="viewer-last" type="button" aria-label="Última página">»</button>
+        </div>
       </div>
       <div class="viewer-footer">
-        <span>Los datos se muestran desde los documentos finales compartidos en Drive.</span>
+        <span>El visor muestra copias visuales de las páginas finales. Los archivos maestros permanecen disponibles en Drive.</span>
         <div class="viewer-links">
           <a id="open-pdf" href="https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/view?usp=sharing" target="_blank" rel="noopener">Abrir PDF</a>
           <a id="open-slides" href="https://docs.google.com/presentation/d/1E3ZMqYe9rcLcak8wKPMFTHI7ftI7vPee/edit?usp=sharing&ouid=113262004160612439989&rtpof=true&sd=true" target="_blank" rel="noopener">Abrir presentación</a>
@@ -775,22 +935,28 @@ button, a { -webkit-tap-highlight-color:transparent; }
 <script>
 const docs = {
   life: {
-    name: "Prestige Life", meta: "PDF · 12 páginas",
-    preview: "https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/preview",
+    name: "Prestige Life",
+    meta: "PDF · 12 páginas",
+    pageCount: 12,
+    pageDir: "assets/pages/life",
     pdf: "https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/view?usp=sharing",
     slides: "https://docs.google.com/presentation/d/1E3ZMqYe9rcLcak8wKPMFTHI7ftI7vPee/edit?usp=sharing&ouid=113262004160612439989&rtpof=true&sd=true",
     folder: "https://drive.google.com/drive/folders/1J6_sU_KIH2_UvvLMwLqj_kZd547k8FD4?usp=sharing"
   },
   health: {
-    name: "Prestige Health", meta: "PDF · 20 páginas",
-    preview: "https://drive.google.com/file/d/1qNIB5L6ZhhhlMjwvfxpL1OhJSsTNdZ5q/preview",
+    name: "Prestige Health",
+    meta: "PDF · 20 páginas",
+    pageCount: 20,
+    pageDir: "assets/pages/health",
     pdf: "https://drive.google.com/file/d/1qNIB5L6ZhhhlMjwvfxpL1OhJSsTNdZ5q/view?usp=sharing",
     slides: "https://docs.google.com/presentation/d/1Bgo5QXaIDZtB9qH7pCf-oKVjdeKUlWUC/edit?usp=sharing&ouid=113262004160612439989&rtpof=true&sd=true",
     folder: "https://drive.google.com/drive/folders/1cQOblK3_snu6VW2blom1FGdXNuhAy5GV?usp=sharing"
   },
   supp: {
-    name: "Prestige Supp", meta: "PDF · 35 páginas",
-    preview: "https://drive.google.com/file/d/1F2uZsPcsyQQQxBRgKAgeCgZHtuy6umcP/preview",
+    name: "Prestige Supp",
+    meta: "PDF · 35 páginas",
+    pageCount: 35,
+    pageDir: "assets/pages/supp",
     pdf: "https://drive.google.com/file/d/1F2uZsPcsyQQQxBRgKAgeCgZHtuy6umcP/view?usp=sharing",
     slides: "https://docs.google.com/presentation/d/1UvY-tsY1UaLcRmYa766p8t61VSSPnpY9/edit?usp=sharing&ouid=113262004160612439989&rtpof=true&sd=true",
     folder: "https://drive.google.com/drive/folders/1aLkcj7e5SPKqOSbiIbUz7Rz4cGC1RrRb?usp=sharing"
@@ -863,46 +1029,82 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-function buildPreviewUrl(baseUrl, page = 1) {
-  const safePage = Math.max(1, Number.parseInt(page, 10) || 1);
-  return `${baseUrl}#page=${safePage}`;
+let activeViewerDoc = "life";
+let activeViewerPage = 1;
+
+function getPageAsset(docKey, page) {
+  const d = docs[docKey];
+  const safePage = Math.min(
+    d.pageCount,
+    Math.max(1, Number.parseInt(page, 10) || 1)
+  );
+  return `${d.pageDir}/page-${String(safePage).padStart(3, "0")}.webp`;
 }
 
-function buildExternalPdfUrl(baseUrl, page = 1) {
-  const safePage = Math.max(1, Number.parseInt(page, 10) || 1);
-  return `${baseUrl}#page=${safePage}`;
+function preloadAdjacentPages(docKey, page) {
+  const d = docs[docKey];
+  [page - 1, page + 1].forEach(candidate => {
+    if (candidate < 1 || candidate > d.pageCount) return;
+    const preload = new Image();
+    preload.src = getPageAsset(docKey, candidate);
+  });
+}
+
+function updateViewerControls() {
+  const d = docs[activeViewerDoc];
+  const atFirst = activeViewerPage <= 1;
+  const atLast = activeViewerPage >= d.pageCount;
+
+  document.getElementById("viewer-prev").disabled = atFirst;
+  document.getElementById("viewer-first").disabled = atFirst;
+  document.getElementById("viewer-next").disabled = atLast;
+  document.getElementById("viewer-last").disabled = atLast;
+
+  const input = document.getElementById("viewer-page-input");
+  input.value = activeViewerPage;
+  input.max = d.pageCount;
+  document.getElementById("viewer-page-total").textContent = d.pageCount;
 }
 
 function setViewer(key, page = 1) {
   const d = docs[key];
   if (!d) return;
 
-  const safePage = Math.max(1, Number.parseInt(page, 10) || 1);
-  const frame = document.getElementById("document-frame");
+  activeViewerDoc = key;
+  activeViewerPage = Math.min(
+    d.pageCount,
+    Math.max(1, Number.parseInt(page, 10) || 1)
+  );
+
+  const stage = document.getElementById("viewer-page-stage");
+  const image = document.getElementById("document-page");
+
+  stage.classList.add("loading");
+  image.onload = () => {
+    stage.classList.remove("loading");
+    preloadAdjacentPages(activeViewerDoc, activeViewerPage);
+  };
+  image.onerror = () => {
+    stage.classList.remove("loading");
+    image.alt = `No se pudo cargar ${d.name}, página ${activeViewerPage}`;
+  };
+
+  image.src = getPageAsset(key, activeViewerPage);
+  image.alt = `${d.name}, página ${activeViewerPage}`;
 
   document.getElementById("viewer-name").textContent = d.name;
   document.getElementById("viewer-meta").textContent =
-    `${d.meta} · página ${safePage}`;
+    `${d.meta} · página ${activeViewerPage}`;
 
-  /*
-    Google Drive admite la página inicial mediante #page=N.
-    Se limpia primero el iframe para garantizar la recarga incluso cuando
-    se navega entre páginas del mismo documento.
-  */
-  frame.src = "about:blank";
-  window.setTimeout(() => {
-    frame.src = buildPreviewUrl(d.preview, safePage);
-  }, 30);
-
-  frame.title = `Visor ${d.name} · página ${safePage}`;
-  document.getElementById("open-pdf").href =
-    buildExternalPdfUrl(d.pdf, safePage);
+  document.getElementById("open-pdf").href = d.pdf;
   document.getElementById("open-slides").href = d.slides;
   document.getElementById("open-folder").href = d.folder;
 
   document.querySelectorAll(".viewer-switch button").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.doc === key);
   });
+
+  updateViewerControls();
 }
 
 function openViewer(key, page = 1) {
@@ -912,9 +1114,48 @@ function openViewer(key, page = 1) {
     block:"start"
   });
 }
+
+function changeViewerPage(delta) {
+  setViewer(activeViewerDoc, activeViewerPage + delta);
+}
+
+function submitViewerPage() {
+  const input = document.getElementById("viewer-page-input");
+  setViewer(activeViewerDoc, input.value);
+}
 document.querySelectorAll(".viewer-switch button").forEach(btn => {
   btn.addEventListener("click", () => setViewer(btn.dataset.doc, 1));
 });
+
+document.getElementById("viewer-prev").addEventListener("click", () => {
+  changeViewerPage(-1);
+});
+document.getElementById("viewer-next").addEventListener("click", () => {
+  changeViewerPage(1);
+});
+document.getElementById("viewer-first").addEventListener("click", () => {
+  setViewer(activeViewerDoc, 1);
+});
+document.getElementById("viewer-last").addEventListener("click", () => {
+  setViewer(activeViewerDoc, docs[activeViewerDoc].pageCount);
+});
+document.getElementById("viewer-page-input").addEventListener("change", submitViewerPage);
+document.getElementById("viewer-page-input").addEventListener("keydown", event => {
+  if (event.key === "Enter") submitViewerPage();
+});
+
+document.getElementById("viewer-page-shell").addEventListener("keydown", event => {
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    changeViewerPage(-1);
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    changeViewerPage(1);
+  }
+});
+
+setViewer("life", 1);
 document.querySelectorAll(".map-tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".map-tabs button").forEach(b => b.classList.remove("active"));
