@@ -657,10 +657,9 @@ if (heroPresentationButton) {
 
   heroPresentationButton.addEventListener("click", () => {
     const key = presentationKeys[heroPresentationIndex];
-    const item = docs[key];
-    if (!item?.slides) return;
+    if (!docs[key]) return;
 
-    window.open(item.slides, "_blank", "noopener,noreferrer");
+    openViewer(key);
     advanceHeroPresentation();
   });
 }
