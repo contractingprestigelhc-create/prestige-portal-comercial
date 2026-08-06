@@ -258,6 +258,72 @@ button, a { -webkit-tap-highlight-color:transparent; }
   .map-panel { padding:20px; }
   .viewer-frame { min-height:470px; height:70vh; }
 }
+@media (max-width:820px) {
+  /* En móviles y pantallas angostas, cada fuente queda en formato vertical. */
+  .sources-grid {
+    grid-template-columns:1fr;
+    gap:22px;
+  }
+
+  .source-card {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+  }
+
+  .card-visual {
+    width:100%;
+    min-height:0;
+    aspect-ratio:16/9;
+    border-bottom:1px solid var(--line);
+    background:#fff;
+  }
+
+  .card-visual img {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#fff;
+  }
+
+  .card-body {
+    padding:22px;
+  }
+
+  .card-body p {
+    min-height:0;
+  }
+
+  .hero-actions {
+    align-items:stretch;
+  }
+
+  #hero-presentation-btn {
+    min-width:230px;
+  }
+}
+
+@media (max-width:520px) {
+  .hero-actions {
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+  }
+
+  .hero-actions .btn,
+  #hero-presentation-btn {
+    width:100%;
+    min-width:0;
+  }
+
+  .card-actions {
+    grid-template-columns:1fr;
+  }
+
+  .card-actions .wide {
+    grid-column:auto;
+  }
+}
 </style>
 </head>
 <body>
@@ -289,7 +355,9 @@ button, a { -webkit-tap-highlight-color:transparent; }
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#fuentes">Explorar fuentes</a>
-        <button class="btn btn-secondary" type="button" onclick="openViewer('life')">Ver presentación Life</button>
+        <button class="btn btn-secondary" id="hero-presentation-btn" type="button">
+          Ver presentación Life
+        </button>
       </div>
     </div>
   </div>
@@ -537,6 +605,73 @@ const docs = {
     folder: "https://drive.google.com/drive/folders/1aLkcj7e5SPKqOSbiIbUz7Rz4cGC1RrRb?usp=sharing"
   }
 };
+
+
+const presentationKeys = Object.keys(docs);
+let heroPresentationIndex = 0;
+let heroPresentationTimer = null;
+
+function getPresentationLabel(key) {
+  const item = docs[key];
+  if (!item) return key;
+  return item.name.replace(/^Prestige\s+/i, "");
+}
+
+function updateHeroPresentationButton() {
+  const button = document.getElementById("hero-presentation-btn");
+  if (!button || presentationKeys.length === 0) return;
+
+  const key = presentationKeys[heroPresentationIndex];
+  const label = getPresentationLabel(key);
+  button.textContent = `Ver presentación ${label}`;
+  button.setAttribute("aria-label", `Abrir presentación ${label}`);
+}
+
+function advanceHeroPresentation() {
+  if (presentationKeys.length === 0) return;
+  heroPresentationIndex = (heroPresentationIndex + 1) % presentationKeys.length;
+  updateHeroPresentationButton();
+}
+
+function startHeroPresentationRotation() {
+  if (heroPresentationTimer || presentationKeys.length < 2) return;
+  heroPresentationTimer = window.setInterval(advanceHeroPresentation, 4500);
+}
+
+function stopHeroPresentationRotation() {
+  if (!heroPresentationTimer) return;
+  window.clearInterval(heroPresentationTimer);
+  heroPresentationTimer = null;
+}
+
+const heroPresentationButton = document.getElementById("hero-presentation-btn");
+
+if (heroPresentationButton) {
+  updateHeroPresentationButton();
+  startHeroPresentationRotation();
+
+  heroPresentationButton.addEventListener("mouseenter", stopHeroPresentationRotation);
+  heroPresentationButton.addEventListener("mouseleave", startHeroPresentationRotation);
+  heroPresentationButton.addEventListener("focus", stopHeroPresentationRotation);
+  heroPresentationButton.addEventListener("blur", startHeroPresentationRotation);
+
+  heroPresentationButton.addEventListener("click", () => {
+    const key = presentationKeys[heroPresentationIndex];
+    const item = docs[key];
+    if (!item?.slides) return;
+
+    window.open(item.slides, "_blank", "noopener,noreferrer");
+    advanceHeroPresentation();
+  });
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopHeroPresentationRotation();
+  } else {
+    startHeroPresentationRotation();
+  }
+});
 
 function setViewer(key) {
   const d = docs[key];
