@@ -11,8 +11,8 @@
 <meta property="og:title" content="Portal Comercial Prestige | Life, Health y Suplementarios">
 <meta property="og:description" content="Fuentes corporativas de Vida, Health/ACA/Medicare y Seguros Suplementarios en un portal unificado.">
 <meta property="og:url" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/#visor">
-<meta property="og:image" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=6?v=6">
-<meta property="og:image:secure_url" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=6?v=6">
+<meta property="og:image" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=7?v=7?v=6">
+<meta property="og:image:secure_url" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=7?v=7?v=6">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,10 +20,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Portal Comercial Prestige | Life, Health y Suplementarios">
 <meta name="twitter:description" content="Fuentes corporativas de Vida, Health/ACA/Medicare y Seguros Suplementarios en un portal unificado.">
-<meta name="twitter:image" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=6?v=6">
-<link rel="icon" href="assets/favicon.ico" sizes="any">
+<meta name="twitter:image" content="https://contractingprestigelhc-create.github.io/prestige-portal-comercial/assets/og-prestige.png?v=7?v=7?v=6">
+<link rel="icon" href="assets/favicon.ico?v=7" sizes="any">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/prestige-isotipo.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=7">
 <meta name="theme-color" content="#d80719">
 <title>Portal Comercial | Prestige Life and Health</title>
 <style>
@@ -470,9 +470,20 @@ button, a { -webkit-tap-highlight-color:transparent; }
           <button data-doc="supp">Suplementarios</button>
         </div>
       </div>
-      <div class="viewer-frame">
+      <div class="viewer-frame" id="viewer-frame-shell">
+        <div class="viewer-poster" id="viewer-poster">
+          <img src="assets/prestige-logo.png" alt="Prestige Life and Health">
+          <p>
+            Vista inicial corporativa del visor. Haz clic para cargar la vista previa
+            del documento seleccionado desde Google Drive.
+          </p>
+          <div class="poster-actions">
+            <button id="load-preview" type="button">Cargar vista previa</button>
+            <a class="poster-ghost" id="poster-open-pdf" href="https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/view?usp=sharing" target="_blank" rel="noopener">Abrir PDF</a>
+          </div>
+        </div>
         <iframe id="document-frame"
-          src="https://drive.google.com/file/d/1CLtdzYsrYOVS-sqL02GfauwtKlqOtuPR/preview"
+          src="about:blank"
           title="Visor Prestige Life"
           allow="autoplay">
         </iframe>
@@ -538,27 +549,49 @@ const docs = {
   }
 };
 
+let activeDoc = "life";
+
+function showViewerPoster() {
+  document.getElementById("viewer-frame-shell").classList.remove("is-loaded");
+  document.getElementById("document-frame").src = "about:blank";
+}
+
+function loadPreview() {
+  const d = docs[activeDoc];
+  if (!d) return;
+  document.getElementById("document-frame").src = d.preview;
+  document.getElementById("viewer-frame-shell").classList.add("is-loaded");
+}
+
 function setViewer(key) {
   const d = docs[key];
   if (!d) return;
+  activeDoc = key;
   document.getElementById("viewer-name").textContent = d.name;
   document.getElementById("viewer-meta").textContent = d.meta;
-  document.getElementById("document-frame").src = d.preview;
   document.getElementById("document-frame").title = "Visor " + d.name;
   document.getElementById("open-pdf").href = d.pdf;
   document.getElementById("open-slides").href = d.slides;
   document.getElementById("open-folder").href = d.folder;
+  document.getElementById("poster-open-pdf").href = d.pdf;
   document.querySelectorAll(".viewer-switch button").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.doc === key);
   });
+  showViewerPoster();
 }
+
 function openViewer(key) {
   setViewer(key);
   document.getElementById("visor").scrollIntoView({behavior:"smooth", block:"start"});
 }
+
 document.querySelectorAll(".viewer-switch button").forEach(btn => {
   btn.addEventListener("click", () => setViewer(btn.dataset.doc));
 });
+
+document.getElementById("load-preview").addEventListener("click", loadPreview);
+
+setViewer("life");
 document.querySelectorAll(".map-tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".map-tabs button").forEach(b => b.classList.remove("active"));
