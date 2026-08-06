@@ -50,6 +50,12 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .nav a:hover { background:#f2f2ef; }
 .nav .nav-cta { color:#fff; background:var(--prestige-red); }
 .nav .nav-cta:hover { background:var(--prestige-red-dark); }
+.share-btn {
+  border:1px solid var(--prestige-red); background:var(--prestige-red); color:#fff; cursor:pointer;
+  min-height:38px; padding:0 15px; border-radius:999px; font-weight:850;
+  box-shadow:0 8px 18px rgba(216,7,25,.18);
+}
+.share-btn:hover { background:var(--prestige-red-dark); border-color:var(--prestige-red-dark); }
 
 .hero {
   position:relative; overflow:hidden; min-height:610px;
@@ -57,7 +63,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
   border-bottom:1px solid rgba(0,0,0,.07);
 }
 .hero::after {
-  content:""; position:absolute; right:-13%; bottom:-51%; width:72%; aspect-ratio:1;
+  content:""; position:absolute; right:-12%; bottom:-34%; width:54%; aspect-ratio:1;
   border-radius:50%; background:var(--prestige-red);
   box-shadow:-8px -5px 0 var(--prestige-green);
 }
@@ -65,7 +71,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
   position:absolute; right:2.5%; top:18px; width:min(610px,55vw); opacity:.19;
   pointer-events:none; mix-blend-mode:multiply;
 }
-.hero-content { position:relative; z-index:2; width:min(700px,70%); padding:86px 0 104px; }
+.hero-content { position:relative; z-index:2; width:min(640px,54%); padding:86px 0 104px; }
 .eyebrow {
   display:inline-flex; align-items:center; gap:10px;
   color:var(--prestige-green); font-size:.83rem; font-weight:850; letter-spacing:.15em; text-transform:uppercase;
@@ -202,9 +208,10 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .copyright { position:relative; z-index:2; margin-top:36px; color:#888; font-size:.82rem; }
 
 @media (max-width:960px) {
-  .nav a:not(.nav-cta) { display:none; }
+  .nav a:not(.viewer-link) { display:none; }
   .hero { min-height:570px; }
-  .hero-content { width:82%; }
+  .hero-content { width:68%; }
+  .hero::after { width:78%; right:-45%; bottom:-28%; }
   .sources-grid { grid-template-columns:1fr; }
   .source-card { display:grid; grid-template-columns:38% 62%; }
   .card-visual { aspect-ratio:auto; min-height:100%; }
@@ -221,7 +228,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
   .family-art { width:92vw; opacity:.12; right:-34%; top:12px; }
   .hero-content { width:100%; padding:76px 0 170px; }
   .hero h1 { font-size:clamp(3.2rem,15vw,4.8rem); }
-  .hero::after { width:115%; right:-55%; bottom:-38%; }
+  .hero::after { width:118%; right:-66%; bottom:-42%; }
   .section { padding:62px 0; }
   .section-head { align-items:start; flex-direction:column; }
   .source-card { display:flex; }
@@ -242,8 +249,8 @@ button, a { -webkit-tap-highlight-color:transparent; }
     <nav class="nav" aria-label="Navegación principal">
       <a href="#fuentes">Fuentes</a>
       <a href="#mapa">Mapa del contenido</a>
-      <a href="#visor">Visor</a>
-      <a class="nav-cta" href="#visor">Abrir portal</a>
+      <a class="viewer-link" href="#visor">Ver documentos</a>
+      <button class="share-btn" type="button" onclick="copyPortalLink()">Compartir</button>
     </nav>
   </div>
 </header>
@@ -426,7 +433,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
         <h2>Visor de documentos</h2>
       </div>
       <p class="section-intro">
-        Cambia de fuente sin salir del portal. El contenido se carga directamente desde Google Drive.
+        Consulta Life, Health y Suplementarios sin salir del portal. El contenido se carga directamente desde Google Drive.
       </p>
     </div>
 
@@ -460,9 +467,8 @@ button, a { -webkit-tap-highlight-color:transparent; }
     </div>
 
     <div class="notice">
-      <strong>Nota de publicación:</strong> Google Drive almacena el archivo HTML, pero no funciona como
-      alojamiento web estático. El portal puede abrirse localmente; para compartirlo como enlace web debe
-      publicarse en un servicio de hosting estático.
+      <strong>Portal publicado:</strong> este sitio ya está disponible mediante GitHub Pages.
+      Los PDF, presentaciones y carpetas maestras continúan alojados en Google Drive con acceso de lectura.
     </div>
   </div>
 </section>
@@ -540,6 +546,19 @@ document.querySelectorAll(".map-tabs button").forEach(btn => {
     document.getElementById(btn.dataset.panel).hidden = false;
   });
 });
+
+async function copyPortalLink() {
+  const url = "https://contractingprestigelhc-create.github.io/prestige-portal-comercial/";
+  try {
+    await navigator.clipboard.writeText(url);
+    const button = document.querySelector(".share-btn");
+    const original = button.textContent;
+    button.textContent = "Enlace copiado";
+    setTimeout(() => button.textContent = original, 1800);
+  } catch (error) {
+    window.prompt("Copia el enlace del portal:", url);
+  }
+}
 </script>
 </body>
 </html>
